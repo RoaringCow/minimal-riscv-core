@@ -17,7 +17,7 @@ module instr_decode (
 
 
 // zaten hepsinde var
-assign opcode = instr_i[6:2];
+assign opcode_o = instr_i[6:2];
 
 // because verilog does not support enums
 // ------ instr_type value equivalents --------
@@ -122,7 +122,7 @@ always @(*) begin
 		5'b11001: begin // zıplaa jalr
 		    // aslında tepedekiyle birleştirilebilir ama bu şekilde daha belli nerede olduğu
 
-		    instr_type = I_TYPE;
+		    instr_type_o = I_TYPE;
 
 			imm_o[31:11] = {21{instr_i[31]}};
 			imm_o[10:5] = instr_i[30:25];
