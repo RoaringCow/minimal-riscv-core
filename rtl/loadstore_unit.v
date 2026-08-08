@@ -27,7 +27,7 @@ module loadstore_unit(
 // isimlendirme konusunda korkuncum
 reg [31:0] addr; // alignment kısmını ram hallediyor
 reg [31:0] wdata;
-reg [3:0]byte_enable;
+reg [3:0] byte_enable;
 
 
 
