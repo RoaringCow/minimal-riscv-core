@@ -2,17 +2,19 @@
 
 module control_unit (
     input wire 		clk,
-    input wire 		rst,
+    input wire 		rst,    // TODO: bunu negatif yapsana. isimlendirme olarak
 
     input wire [31:0]	instr_i,
 
+
+    input mem_valid,
+    output reg mem_req,
 
 
 
     output wire [1:0]	ls_ctr_o,
     output wire 		pc_o
 );
-
 
 
 
@@ -53,9 +55,6 @@ localparam [2:0] J_TYPE = 3'h5;
 
 reg instruction_register; // büyük adam olduğu için adı uzun
 
-wire ls_fetch;
-wire ls_load;
-wire ls_store;
 wire alu_enable;
 // alu için direkt funct3 gönderecem (ve funct7)
 wire alu_is_immediate; // rs2 mi yoksa immediate mı
@@ -113,9 +112,6 @@ always @(posedge clk or negedge rst) begin
 end
 
 
-reg mem_req;   // controlcüden istek.
-reg mem_valid; //
-// reg  gerekmiş
 
 // kombinasyonel şeyler
 always @(*) begin

@@ -16,8 +16,6 @@ module instr_decode (
 );
 
 
-// zaten hepsinde var
-assign opcode_o = instr_i[6:2];
 
 // because verilog does not support enums
 // ------ instr_type value equivalents --------
@@ -36,6 +34,9 @@ localparam [2:0] J_TYPE = 3'h5;
 
 
 always @(*) begin
+    // zaten hepsinde var
+    opcode_o = instr_i[6:2];
+
 	case (instr_i[6:2]) // sonlar hep 11 zaten. 32 bit olduğundan (uzunluğu belirtiyor)
 		5'b01100: begin	// R type
 

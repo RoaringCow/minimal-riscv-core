@@ -35,7 +35,7 @@ reg manual_flag_set; // yani aklıma başka bir şey gelmedi :DD
 adder_32bit adder (
     .rs1_i          (rs1_i),
     .rs2_i          (rs2_i),
-    .mode_flag      (mode_flag),
+    .mode_flag_i      (mode_flag),
     .adder_result_o (sum),
     .carry_out_o    (carry_out)
 );
@@ -53,6 +53,7 @@ adder_32bit adder (
 
 always @(*) begin
     alu_result_o = 32'd0;
+    manual_flag_set = 1'd0;
 
     case(funct3_i)
         3'b000: begin
@@ -66,7 +67,12 @@ always @(*) begin
         3'b010: begin
             // set less than    (signed)
             manual_flag_set = 1;
-            //if (carry_out)  alu_result_o
+
+            // çaldım
+            alu_result_o = (rs1_i[31] ^ rs2_i[31]) ? rs1_i[31] : sum[31];
+            // eğer sign bit 1 ise negatif yani less than.
+            // eğer sign bit 0 ise ve overflow varsa sıkınıtı ondan yine less than
+            // tamamen ona bakıyor :))
 
 
         end
