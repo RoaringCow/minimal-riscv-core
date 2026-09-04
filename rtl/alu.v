@@ -13,6 +13,9 @@ module alu (
     input   [31:0]  rs2_i,
     input   [2:0]   funct3_i,
     input   [6:0]   funct7_i,
+    input 	alu_control_override,
+    input 	[2:0]	override_funct,
+    input 	branch_mode_flag,
 
     output reg  [31:0]  alu_result_o
 );
@@ -21,7 +24,7 @@ module alu (
 
 //000 0000 is add
 //010 0000 is sub
-wire mode_flag = funct7_i[5] | manual_flag_set;
+wire mode_flag = alu_control_override ? branch_mode_flag : funct7_i[5] | manual_flag_set;
 // mode_flag is also used in shift logical or arithmetic
 // 000 0000 is logical
 // 010 0000 is arithmetic
@@ -30,6 +33,9 @@ wire carry_out;
 
 
 reg manual_flag_set; // yani aklıma başka bir şey gelmedi :DD
+
+
+wire [2:0] control_select = alu_control_override ? override_funct : funct3_i;
 
 
 adder_32bit adder (
@@ -55,7 +61,7 @@ always @(*) begin
     alu_result_o = 32'd0;
     manual_flag_set = 1'd0;
 
-    case(funct3_i)
+    case(control_select)
         3'b000: begin
             alu_result_o = sum;
         end

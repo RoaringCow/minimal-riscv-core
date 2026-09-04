@@ -11,36 +11,26 @@ module instr_decode (
 	output reg [2:0]	funct3_o,
 	output reg [6:0]	funct7_o,
 	output reg [31:0]	imm_o, // not the actual immediate value but rather kind of extended and vb version
-	output reg [2:0]    instr_type_o
+	output reg [3:0]    instr_type_o
 
 );
 
 
 
-// because verilog does not support enums
-// ------ instr_type value equivalents --------
-// R type ->  0x0
-// I type ->  0x1
-// S type ->  0x2
-// B type ->  0x3
-// U type ->  0x4
-// J type ->  0x5
-localparam [2:0] R_TYPE = 3'h0;
-localparam [2:0] I_TYPE = 3'h1;
-localparam [2:0] S_TYPE = 3'h2;
-localparam [2:0] B_TYPE = 3'h3;
-localparam [2:0] U_TYPE = 3'h4;
-localparam [2:0] J_TYPE = 3'h5;
 
 
 always @(*) begin
     // zaten hepsinde var
     opcode_o = instr_i[6:2];
+    imm_o = 32'b0;
+    rd_o = 5'b0;
+    rs1_o = 5'b0;
+    rs2_o = 5'b0;
+    funct3_o = 3'b0;
+    funct7_o = 7'b0;
 
 	case (instr_i[6:2]) // sonlar hep 11 zaten. 32 bit olduğundan (uzunluğu belirtiyor)
 		5'b01100: begin	// R type
-
-    		instr_type_o = R_TYPE;
 
     		rd_o = instr_i[11:7];
     		rs1_o = instr_i[19:15];
@@ -48,13 +38,10 @@ always @(*) begin
     		funct3_o = instr_i[14:12];
     		funct7_o = instr_i[31:25];
 
-
 		 // func 3 ve func 7 işini halledecem sonra
 
 		end
 		5'b00100, 5'b00000: begin	// I type aritmetik ve load
-
-		    instr_type_o = I_TYPE;
 
 			rd_o = instr_i[11:7];
 			rs1_o = instr_i[19:15];
@@ -69,8 +56,6 @@ always @(*) begin
 		end
 		5'b01000: begin // S type store
 
-            instr_type_o = S_TYPE;
-
 			rs1_o = instr_i[19:15];
 			rs2_o = instr_i[24:20];
 			funct3_o = instr_i[14:12];
@@ -82,8 +67,6 @@ always @(*) begin
 
 		end
 		5'b11000: begin // B type branch
-
-		    instr_type_o = B_TYPE;
 
 		    rs1_o = instr_i[19:15];
 			rs2_o = instr_i[24:20];
@@ -99,8 +82,6 @@ always @(*) begin
 		end
 		5'b01101, 5'b00101: begin // U type (lui) & (auipc)
 
-		    instr_type_o = U_TYPE;
-
 		    rd_o = instr_i[11:7];
 
 			imm_o[31] = instr_i[31];
@@ -109,9 +90,6 @@ always @(*) begin
 
 		end
 		5'b11011: begin // zıplaa jal
-
-		    instr_type_o = J_TYPE;
-
 
 			imm_o[31:20] = {12{instr_i[31]}};
 			imm_o[19:12] = instr_i[19:12];
@@ -122,8 +100,6 @@ always @(*) begin
 		end
 		5'b11001: begin // zıplaa jalr
 		    // aslında tepedekiyle birleştirilebilir ama bu şekilde daha belli nerede olduğu
-
-		    instr_type_o = I_TYPE;
 
 			imm_o[31:11] = {21{instr_i[31]}};
 			imm_o[10:5] = instr_i[30:25];
@@ -142,8 +118,70 @@ always @(*) begin
 			// diğer bitlerden fark ettiriyor
 		end
 
+		default: begin end
+
 	endcase
+
+
 end
 
+
+
+// -------- Tip belirleme--------
+// ayrı bir yere aldım
+// because verilog does not support enums
+// ------ instr_type value equivalents --------
+localparam [3:0] R_ALU_TYPE =   4'd0;
+localparam [3:0] I_ALU_TYPE =   4'd1;
+localparam [3:0] STORE_TYPE =   4'd2;
+localparam [3:0] LOAD_TYPE =    4'd3;
+localparam [3:0] BRANCH_TYPE =  4'd4;
+localparam [3:0] JAL_TYPE =     4'd5;
+localparam [3:0] JALR_TYPE =    4'd6;
+localparam [3:0] LUI_TYPE =     4'd7;
+localparam [3:0] AUIPC_TYPE =   4'd8;
+localparam [3:0] EBREAK_TYPE =  4'd9;
+localparam [3:0] ECALL_TYPE =   4'd10;
+localparam [3:0] ILLEGAL_TYPE = 4'd11;
+
+always @(*) begin
+    instr_type_o = EBREAK_TYPE;
+
+    if (instr_i[1:0] != 2'b11) instr_type_o = ILLEGAL_TYPE; // uncompressed olduğundan minik check
+    else case (instr_i[6:2]) // sonlar hep 11 zaten. 32 bit olduğundan (uzunluğu belirtiyor)
+        // R type
+		5'b01100:           instr_type_o = R_ALU_TYPE;
+		// I type aritmetik
+		5'b00100:           instr_type_o = I_ALU_TYPE;
+		// I type load
+		5'b00000:           instr_type_o = LOAD_TYPE;
+		// S type store
+		5'b01000:           instr_type_o = STORE_TYPE;
+		// B type branch
+		5'b11000:           instr_type_o = BRANCH_TYPE;
+		// U type lui
+		5'b01101:           instr_type_o = LUI_TYPE;
+		// U type auipc
+		5'b00101:           instr_type_o = AUIPC_TYPE;
+		// zıplaa jal
+		5'b11011:           instr_type_o = JAL_TYPE;
+		// zıplaa jalr
+		5'b11001:           instr_type_o = JALR_TYPE;
+		// -------- weird ops --------
+		5'b00011: begin // Fence, Fence.TSO, PAUSE
+
+			// Dunno
+
+		end
+		// ECall EBREAk
+		5'b11100:   instr_type_o = instr_i[20] ? EBREAK_TYPE : ECALL_TYPE;
+
+		default begin
+		// boş şu an :O
+		end
+
+	endcase
+
+end
 
 endmodule

@@ -6,10 +6,11 @@ module mem(
     input [31:0] wdata_i,
     input [3:0] byte_enable_i, //madem byte korunması gerek böyle olsun
 
-    output reg rdata_o
+    output reg [31:0] rdata_o
 );
 
 reg [31:0] mem [0:255]; // bu syntaxa tam aşina değilim. değişik geliyor
+
 
 always @(posedge clk) begin
 

@@ -3,11 +3,8 @@
 module loadstore_unit(
     input clk,
     input [31:0] pc_i,
-    // 0 = load,
-    // 1 = store,
     input [1:0] ls_ctrl_i,
     input [2:0] funct3,
-    input [31:0] data_i,
 
     input [31:0] rs1_i,
     input [31:0] rs2_i,
@@ -43,6 +40,9 @@ reg [3:0] byte_enable;
 always @(*) begin
     mem_req = 0;
     byte_enable = 0;
+    value_o = 32'd0;
+    addr = 32'd0;
+    wdata = 32'd0;
 
     case (ls_ctrl_i)
     2'd0: begin
@@ -53,7 +53,7 @@ always @(*) begin
     2'd1: begin
         // ayrı bir address generator yerine aluya almayı düşünüyorum.
         // eğer üşenmezsem
-        addr = rs1_i + immediate_i;
+        addr = rs1_i + immediate_i; //addr_i;
         mem_req = 1;
 
         case (funct3)
@@ -81,13 +81,17 @@ always @(*) begin
     endcase
 end
 
-always @(posedge clk) begin
-    mem_valid <= mem_req;
-end
+
 
 reg mem_req;
 
 wire [31:0] rdata_o;
+
+
+// böyle dursun. ram anında veriyor bu durumda
+always @(posedge clk) begin
+    mem_valid <= mem_req;
+end
 
 mem memory (
     .clk(clk),
